@@ -1,0 +1,75 @@
+name: iOS Build & Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build & Test (iOS Simulator)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Inspect Xcode environment
+        run: |
+          xcodebuild -version
+          xcrun simctl list runtimes
+
+      - name: Install XcodeGen
+        run: |
+          if ! command -v xcodegen &> /dev/null; then
+            brew install xcodegen
+          fi
+          xcodegen --version
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Select available iPhone Simulator
+        id: simulator
+        run: |
+          SIMULATOR_ID=$(python3 - <<'PY'
+          import json, subprocess, sys
+
+          data = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "--json"]))
+          ios_runtimes = sorted(
+              (k for k in data["devices"].keys() if "iOS" in k),
+              reverse=True
+          )
+          for runtime in ios_runtimes:
+              devices = [
+                  d for d in data["devices"][runtime]
+                  if d.get("isAvailable") and "iPhone" in d.get("name", "")
+              ]
+              if devices:
+                  print(devices[0]["udid"])
+                  sys.exit(0)
+          sys.exit(1)
+          PY
+          )
+          echo "Selected Simulator UDID: $SIMULATOR_ID"
+          echo "id=$SIMULATOR_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Build & Run Unit Tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project ReceiptsTracker.xcodeproj \
+            -scheme ReceiptsTracker \
+            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults.xcresult
+          path: TestResults.xcresult
+          if-no-files-found: ignore
