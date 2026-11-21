@@ -3,7 +3,7 @@ import SwiftUI
 enum AppTab: Hashable {
     case dashboard
     case receipts
-    case settings
+    case scan
 }
 
 struct AppNavigationView: View {
@@ -13,23 +13,16 @@ struct AppNavigationView: View {
     @State private var dashboardPath: [String] = []
     @State private var receiptsPath: [String] = []
     @State private var selectedReceiptId: String?
-    @State private var isPresentingScanner: Bool = false
+    @State private var isPresentingSettings: Bool = false
 
     var body: some View {
         adaptiveTabView
-            .sheet(isPresented: $isPresentingScanner) {
-                ScanReceiptView(
-                    onScanFinished: { newReceiptId in
-                        isPresentingScanner = false
-                        openReceipt(id: newReceiptId)
-                    },
-                    onOpenSettings: {
-                        selectedTab = .settings
-                    },
-                    onDismiss: {
-                        isPresentingScanner = false
+            .sheet(isPresented: $isPresentingSettings) {
+                NavigationStack {
+                    SettingsView {
+                        isPresentingSettings = false
                     }
-                )
+                }
             }
             .onChange(of: horizontalSizeClass) { _, newSizeClass in
                 // Preserve open receipt seamlessly when folding/unfolding iPhone Duo
@@ -70,11 +63,11 @@ struct AppNavigationView: View {
                 }
                 .tag(AppTab.receipts)
 
-            settingsTab
+            scanTab
                 .tabItem {
-                    Label("Settings", systemImage: "gearshape")
+                    Label("Scan", systemImage: "doc.viewfinder")
                 }
-                .tag(AppTab.settings)
+                .tag(AppTab.scan)
         }
     }
 
@@ -87,8 +80,8 @@ struct AppNavigationView: View {
                 onSelectReceipt: { receiptId in
                     dashboardPath.append(receiptId)
                 },
-                onScanTap: {
-                    isPresentingScanner = true
+                onOpenSettings: {
+                    isPresentingSettings = true
                 }
             )
             .navigationDestination(for: String.self) { receiptId in
@@ -113,7 +106,7 @@ struct AppNavigationView: View {
                         selectedReceiptId = receiptId
                     },
                     onScanTap: {
-                        isPresentingScanner = true
+                        selectedTab = .scan
                     }
                 )
             } detail: {
@@ -139,7 +132,7 @@ struct AppNavigationView: View {
                         receiptsPath.append(receiptId)
                     },
                     onScanTap: {
-                        isPresentingScanner = true
+                        selectedTab = .scan
                     }
                 )
                 .navigationDestination(for: String.self) { receiptId in
@@ -154,21 +147,22 @@ struct AppNavigationView: View {
         }
     }
 
-    private var settingsTab: some View {
-        NavigationStack {
-            SettingsView()
-        }
+    private var scanTab: some View {
+        ScanReceiptView(
+            onScanFinished: { newReceiptId in
+                openReceipt(id: newReceiptId)
+            },
+            onOpenSettings: {
+                isPresentingSettings = true
+            }
+        )
     }
 
     private func openReceipt(id: String) {
         selectedReceiptId = id
-        if selectedTab == .dashboard {
-            dashboardPath.append(id)
-        } else {
-            selectedTab = .receipts
-            if horizontalSizeClass != .regular {
-                receiptsPath = [id]
-            }
+        selectedTab = .receipts
+        if horizontalSizeClass != .regular {
+            receiptsPath = [id]
         }
     }
 }

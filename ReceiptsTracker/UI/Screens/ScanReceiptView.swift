@@ -6,7 +6,7 @@ struct ScanReceiptView: View {
 
     let onScanFinished: (String) -> Void
     let onOpenSettings: () -> Void
-    let onDismiss: () -> Void
+    var onDismiss: (() -> Void)? = nil
 
     @State private var scanViewModel: ScanReceiptViewModel?
     @State private var settingsViewModel: SettingsViewModel?
@@ -27,14 +27,16 @@ struct ScanReceiptView: View {
                     captureOptionsContent
                 }
             }
-            .navigationTitle("Add Receipt")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Scan Receipt")
+            .navigationBarTitleDisplayMode(onDismiss == nil ? .large : .inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(action: onDismiss) {
-                        Label("Close", systemImage: "xmark")
+                if let onDismiss {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(action: onDismiss) {
+                            Label("Close", systemImage: "xmark")
+                        }
+                        .disabled(scanViewModel?.isAnalyzing == true)
                     }
-                    .disabled(scanViewModel?.isAnalyzing == true)
                 }
             }
             .fullScreenCover(isPresented: $isShowingCameraScanner) {
@@ -70,7 +72,7 @@ struct ScanReceiptView: View {
                         settingsViewModel: settingsViewModel,
                         onDiscard: {
                             scanViewModel.dismissErrorAndDiscard()
-                            onDismiss()
+                            onDismiss?()
                         },
                         onRetry: {
                             scanViewModel.retryAnalysis()

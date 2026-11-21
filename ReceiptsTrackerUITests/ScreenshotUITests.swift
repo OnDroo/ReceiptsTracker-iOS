@@ -65,24 +65,26 @@ final class ScreenshotUITests: XCTestCase {
         }
         saveScreenshot(named: "05_ReceiptsList")
 
-        // 5. Scan Receipt Sheet
-        let scanButton = app.buttons["Scan Receipt"].firstMatch
-        if scanButton.waitForExistence(timeout: 3) {
-            scanButton.tap()
-            sleep(1)
-            saveScreenshot(named: "06_ScanReceipt")
-
-            let closeButton = app.buttons["Close"]
-            if closeButton.waitForExistence(timeout: 3) {
-                closeButton.tap()
-                sleep(1)
-            }
-        }
-
-        // 6. Settings Tab
-        tapTab(named: "Settings")
+        // 5. Scan Tab (in the bottom floating Liquid Glass tab bar)
+        tapTab(named: "Scan")
         sleep(1)
-        saveScreenshot(named: "07_Settings")
+        saveScreenshot(named: "06_ScanReceipt")
+
+        // 6. Settings Sheet (opened from top-right of Dashboard)
+        tapTab(named: "Dashboard")
+        sleep(1)
+        // If Receipt Detail was still pushed on Dashboard stack, pop back to Dashboard root
+        let backButton = app.navigationBars.buttons.element(boundBy: 0)
+        if app.buttons["Settings"].waitForExistence(timeout: 2) == false, backButton.exists {
+            backButton.tap()
+            sleep(1)
+        }
+        let settingsButton = app.buttons["Settings"].firstMatch
+        if settingsButton.waitForExistence(timeout: 3) {
+            settingsButton.tap()
+            sleep(1)
+            saveScreenshot(named: "07_Settings")
+        }
     }
 
     private func tapTab(named title: String) {

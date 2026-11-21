@@ -21,13 +21,6 @@ struct ReceiptListView: View {
             }
         }
         .navigationTitle("Receipts")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(action: onScanTap) {
-                    Label("Scan Receipt", systemImage: "doc.viewfinder")
-                }
-            }
-        }
         .task {
             if viewModel == nil {
                 let vm = ReceiptListViewModel(

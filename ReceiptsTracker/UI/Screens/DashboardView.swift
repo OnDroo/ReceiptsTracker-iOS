@@ -6,7 +6,7 @@ struct DashboardView: View {
 
     let onOpenReceipts: () -> Void
     let onSelectReceipt: (String) -> Void
-    let onScanTap: () -> Void
+    let onOpenSettings: () -> Void
 
     @State private var viewModel: DashboardViewModel?
 
@@ -23,8 +23,8 @@ struct DashboardView: View {
         .navigationTitle("Dashboard")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(action: onScanTap) {
-                    Label("Scan Receipt", systemImage: "doc.viewfinder")
+                Button(action: onOpenSettings) {
+                    Label("Settings", systemImage: "gearshape")
                 }
             }
         }
@@ -198,7 +198,7 @@ struct DashboardView: View {
         DashboardView(
             onOpenReceipts: {},
             onSelectReceipt: { _ in },
-            onScanTap: {}
+            onOpenSettings: {}
         )
     }
     .environment(container)

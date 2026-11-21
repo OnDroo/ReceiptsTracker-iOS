@@ -3,6 +3,8 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppContainer.self) private var container
 
+    var onDismiss: (() -> Void)? = nil
+
     @State private var viewModel: SettingsViewModel?
     @State private var isApiKeyVisible: Bool = false
 
@@ -17,6 +19,13 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
+        .toolbar {
+            if let onDismiss {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done", action: onDismiss)
+                }
+            }
+        }
         .task {
             if viewModel == nil {
                 let vm = SettingsViewModel(
