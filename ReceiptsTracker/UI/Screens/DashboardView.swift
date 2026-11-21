@@ -21,13 +21,7 @@ struct DashboardView: View {
             }
         }
         .navigationTitle("Dashboard")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(action: onOpenSettings) {
-                    Label("Settings", systemImage: "gearshape")
-                }
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .task {
             if viewModel == nil {
                 let vm = DashboardViewModel(
@@ -54,6 +48,8 @@ struct DashboardView: View {
 
         ScrollView {
             VStack(spacing: 18) {
+                dashboardHeader
+
                 timeFilterStrip(viewModel: viewModel)
 
                 DashboardSummarySection(
@@ -106,6 +102,28 @@ struct DashboardView: View {
             .padding(.bottom, 24)
         }
         .background(AppTheme.groupedBackground)
+    }
+
+    private var dashboardHeader: some View {
+        HStack(alignment: .center) {
+            Text("Dashboard")
+                .font(.largeTitle.bold())
+                .foregroundStyle(.primary)
+
+            Spacer()
+
+            AdaptiveGlassContainer {
+                Button(action: onOpenSettings) {
+                    Image(systemName: "gearshape")
+                        .font(.title3.weight(.medium))
+                        .foregroundStyle(.primary)
+                        .frame(width: 40, height: 40)
+                }
+                .adaptiveGlassCapsule(interactive: true)
+                .accessibilityLabel("Settings")
+            }
+        }
+        .padding(.top, 4)
     }
 
     private func timeFilterStrip(viewModel: DashboardViewModel) -> some View {

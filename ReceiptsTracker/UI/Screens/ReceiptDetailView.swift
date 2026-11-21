@@ -43,6 +43,7 @@ struct ReceiptDetailView: View {
         }
         .navigationTitle("Receipt Details")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.visible, for: .navigationBar)
         .toolbar {
             if let viewModel, viewModel.receipt != nil {
                 ToolbarItem(placement: .topBarTrailing) {
