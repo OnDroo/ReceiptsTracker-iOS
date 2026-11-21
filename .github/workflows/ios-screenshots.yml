@@ -17,9 +17,14 @@ on:
         default: true
 
 jobs:
-  capture-screenshots:
-    name: Capture Simulator Screenshots
+  capture:
+    name: Capture (${{ matrix.device }})
     runs-on: macos-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        device: ${{ fromJSON(inputs.include_wide_layout && '["iphone", "wide"]' || '["iphone"]') }}
 
     steps:
       - name: Checkout repository
@@ -34,43 +39,46 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
-      - name: Select Simulators (iPhone & Wide/iPad)
-        id: sims
+      - name: Select Simulator (${{ matrix.device }})
+        id: sim
+        env:
+          DEVICE_KIND: ${{ matrix.device }}
         run: |
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
-          import json, subprocess
+          import json, os, subprocess, sys
 
+          kind = os.environ["DEVICE_KIND"]
           data = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "--json"]))
           ios_runtimes = sorted(
               (k for k in data["devices"].keys() if "iOS" in k),
               reverse=True
           )
 
-          iphone_id = ""
-          wide_id = ""
-
+          chosen = None
           for runtime in ios_runtimes:
               devices = [d for d in data["devices"][runtime] if d.get("isAvailable")]
-              if not iphone_id:
-                  iphones = [d for d in devices if "iPhone" in d.get("name", "")]
-                  if iphones:
-                      iphone_id = iphones[0]["udid"]
-              if not wide_id:
+              if kind == "iphone":
+                  matches = [d for d in devices if "iPhone" in d.get("name", "")]
+              else:
                   # Prefer iPad mini (closest to unfolded iPhone Duo 7.6" regular canvas), fallback to any iPad
-                  ipads = [d for d in devices if "iPad mini" in d.get("name", "")] or [d for d in devices if "iPad" in d.get("name", "")]
-                  if ipads:
-                      wide_id = ipads[0]["udid"]
+                  matches = [d for d in devices if "iPad mini" in d.get("name", "")] or [d for d in devices if "iPad" in d.get("name", "")]
+              if matches:
+                  chosen = matches[0]
+                  break
 
-          print(f"iphone_id={iphone_id}")
-          print(f"wide_id={wide_id}")
+          if not chosen:
+              print(f"No available simulator found for {kind}", file=sys.stderr)
+              sys.exit(1)
+
+          print(f"udid={chosen['udid']}")
+          print(f"name={chosen['name']}")
           PY
 
-      - name: Capture Screenshots
+      - name: Build and Capture Screenshots (${{ steps.sim.outputs.name }})
         env:
-          APPEARANCE: ${{ github.event.inputs.appearance || 'both' }}
-          INCLUDE_WIDE: ${{ github.event.inputs.include_wide_layout || 'true' }}
-          IPHONE_ID: ${{ steps.sims.outputs.iphone_id }}
-          WIDE_ID: ${{ steps.sims.outputs.wide_id }}
+          APPEARANCE: ${{ inputs.appearance }}
+          DEVICE_KIND: ${{ matrix.device }}
+          SIM_UDID: ${{ steps.sim.outputs.udid }}
         run: |
           set -euo pipefail
           OUT_ROOT="$RUNNER_TEMP/screenshots"
@@ -89,50 +97,96 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
             CODE_SIGNING_ALLOWED=NO
 
-          run_capture() {
-            local label="$1"
-            local udid="$2"
-            local mode="$3"
-            local out_dir="$OUT_ROOT/${label}-${mode}"
+          # Boot simulator once per device and reuse it across light/dark modes
+          echo "=== Booting ${DEVICE_KIND} simulator (${SIM_UDID}) ==="
+          xcrun simctl boot "$SIM_UDID" || true
+          xcrun simctl bootstatus "$SIM_UDID" -b
+          xcrun simctl status_bar "$SIM_UDID" override --time "9:41" --batteryState charged --batteryLevel 100 || true
+
+          for mode in $MODES; do
+            out_dir="$OUT_ROOT/${DEVICE_KIND}-${mode}"
+            result_bundle="$RUNNER_TEMP/results-${DEVICE_KIND}-${mode}.xcresult"
+            rm -rf "$out_dir" "$result_bundle"
             mkdir -p "$out_dir"
 
-            echo "=== Capturing ${label} (${mode}) on ${udid} ==="
-            xcrun simctl boot "$udid" || true
-            xcrun simctl bootstatus "$udid" -b
-            xcrun simctl ui "$udid" appearance "$mode"
-            xcrun simctl status_bar "$udid" override --time "9:41" --batteryState charged --batteryLevel 100 || true
+            echo "=== Capturing ${DEVICE_KIND} (${mode}) ==="
+            xcrun simctl ui "$SIM_UDID" appearance "$mode"
 
             xcodebuild test-without-building \
               -project ReceiptsTracker.xcodeproj \
               -scheme ReceiptsTrackerScreenshots \
               -derivedDataPath "$RUNNER_TEMP/DerivedData" \
-              -destination "platform=iOS Simulator,id=$udid" \
+              -destination "platform=iOS Simulator,id=$SIM_UDID" \
+              -resultBundlePath "$result_bundle" \
               -only-testing:ReceiptsTrackerUITests/ScreenshotUITests/testCaptureAppScreenshots \
               TEST_RUNNER_SCREENSHOT_DIR="$out_dir" \
               CODE_SIGNING_ALLOWED=NO
 
-            xcrun simctl shutdown "$udid" || true
-          }
+            # Fallback: if simulator sandbox prevented direct writes, extract PNGs from .xcresult
+            if [ -z "$(find "$out_dir" -maxdepth 1 -name '*.png')" ]; then
+              echo "Direct PNG output empty; extracting attachments from $result_bundle"
+              export_dir="$RUNNER_TEMP/export-${DEVICE_KIND}-${mode}"
+              rm -rf "$export_dir"
+              mkdir -p "$export_dir"
+              xcrun xcresulttool export attachments --path "$result_bundle" --output-path "$export_dir"
+              python3 - "$export_dir" "$out_dir" <<'PY'
+          import json, os, shutil, sys
 
-          for mode in $MODES; do
-            run_capture "iphone" "$IPHONE_ID" "$mode"
+          export_dir, out_dir = sys.argv[1], sys.argv[2]
+          manifest_path = os.path.join(export_dir, "manifest.json")
+          if os.path.exists(manifest_path):
+              with open(manifest_path, "r", encoding="utf-8") as f:
+                  manifest = json.load(f)
+              for entry in manifest:
+                  for att in entry.get("attachments", []):
+                      src = os.path.join(export_dir, att.get("exportedFileName", ""))
+                      suggested = att.get("suggestedHumanReadableName", "")
+                      if os.path.isfile(src) and suggested:
+                          base = suggested.split("_0_")[0]
+                          if not base.lower().endswith(".png"):
+                              base += ".png"
+                          shutil.copy2(src, os.path.join(out_dir, base))
+          PY
+            fi
+
+            echo "Captured files in ${DEVICE_KIND}-${mode}:"
+            ls -la "$out_dir"
           done
 
-          if [ "$INCLUDE_WIDE" = "true" ] && [ -n "$WIDE_ID" ]; then
-            for mode in $MODES; do
-              run_capture "wide" "$WIDE_ID" "$mode"
-            done
-          fi
+          xcrun simctl shutdown "$SIM_UDID" || true
 
-          echo "## Captured Screenshots" >> "$GITHUB_STEP_SUMMARY"
-          find "$OUT_ROOT" -name "*.png" | sort | while read -r file; do
-            rel="${file#$OUT_ROOT/}"
+      - name: Upload Device Screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ matrix.device }}
+          path: ${{ runner.temp }}/screenshots
+          if-no-files-found: error
+          retention-days: 1
+
+  package:
+    name: Package Screenshots
+    runs-on: ubuntu-latest
+    needs: capture
+    steps:
+      - name: Download Device Screenshots
+        uses: actions/download-artifact@v4
+        with:
+          pattern: screenshots-*
+          path: screenshots
+          merge-multiple: true
+
+      - name: Write Summary
+        run: |
+          echo "## Captured iOS Simulator Screenshots" >> "$GITHUB_STEP_SUMMARY"
+          find screenshots -name "*.png" | sort | while read -r file; do
+            rel="${file#screenshots/}"
             echo "- \`$rel\`" >> "$GITHUB_STEP_SUMMARY"
           done
 
-      - name: Upload Screenshots Artifact
+      - name: Upload Combined Screenshots Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-simulator-screenshots
-          path: ${{ runner.temp }}/screenshots
+          path: screenshots
           if-no-files-found: error
+          retention-days: 30

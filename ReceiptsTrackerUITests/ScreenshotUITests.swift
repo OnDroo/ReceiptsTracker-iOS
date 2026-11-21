@@ -54,11 +54,14 @@ final class ScreenshotUITests: XCTestCase {
         tapTab(named: "Receipts")
         sleep(1)
 
-        // On regular width split view, select Lidl so detail pane is populated
-        let lidlCell = app.staticTexts["Lidl"].firstMatch
-        if lidlCell.waitForExistence(timeout: 3), app.buttons["Raw Image"].exists == false {
-            lidlCell.tap()
-            sleep(1)
+        // On regular-width split view (where the detail placeholder is visible),
+        // select Lidl so the side-by-side detail pane is populated.
+        if app.staticTexts["Select a Receipt"].waitForExistence(timeout: 2) {
+            let lidlCell = app.staticTexts["Lidl"].firstMatch
+            if lidlCell.waitForExistence(timeout: 3) {
+                lidlCell.tap()
+                sleep(1)
+            }
         }
         saveScreenshot(named: "05_ReceiptsList")
 
