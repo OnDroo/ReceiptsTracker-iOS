@@ -61,27 +61,46 @@ struct SettingsView: View {
             }
 
             Section {
-                HStack(spacing: 10) {
-                    Label("API Key", systemImage: "key.fill")
-                        .fixedSize()
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "key.fill")
+                            .foregroundStyle(Color.accentColor)
+
+                        Text("Gemini API Key")
+                            .font(.body)
+                            .foregroundStyle(.primary)
+
+                        Spacer()
+
+                        if !viewModel.savedApiKey.isEmpty {
+                            Text("Saved")
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(.green)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Color.green.opacity(0.14), in: Capsule())
+                        }
+
+                        Button(isApiKeyVisible ? "Hide" : "Show") {
+                            isApiKeyVisible.toggle()
+                        }
+                        .font(.subheadline)
+                        .buttonStyle(.borderless)
+                    }
 
                     if isApiKeyVisible {
-                        TextField("Paste key", text: apiKeyBinding(for: viewModel))
+                        TextField("Paste Gemini API Key", text: apiKeyBinding(for: viewModel))
+                            .font(.subheadline.monospaced())
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
-                            .multilineTextAlignment(.trailing)
                     } else {
-                        SecureField("Paste key", text: apiKeyBinding(for: viewModel))
+                        SecureField("Paste Gemini API Key", text: apiKeyBinding(for: viewModel))
+                            .font(.subheadline.monospaced())
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
-                            .multilineTextAlignment(.trailing)
                     }
-
-                    Button(isApiKeyVisible ? "Hide" : "Show") {
-                        isApiKeyVisible.toggle()
-                    }
-                    .font(.subheadline)
                 }
+                .padding(.vertical, 2)
 
                 if viewModel.isFetchingModels {
                     HStack(spacing: 10) {

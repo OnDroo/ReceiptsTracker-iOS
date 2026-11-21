@@ -6,11 +6,11 @@ on:
       appearance:
         description: "Color appearance to capture"
         type: choice
-        default: both
+        default: dark
         options:
-          - both
-          - light
           - dark
+          - light
+          - both
       include_wide_layout:
         description: "Also capture wide (regular size class / iPad mini) layout"
         type: boolean
