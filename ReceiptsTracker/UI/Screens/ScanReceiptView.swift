@@ -153,7 +153,7 @@ struct ScanReceiptView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Button("Open Settings") {
-                                onDismiss()
+                                onDismiss?()
                                 onOpenSettings()
                             }
                             .font(.caption.weight(.semibold))
