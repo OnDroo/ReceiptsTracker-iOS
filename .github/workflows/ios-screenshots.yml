@@ -100,6 +100,10 @@ jobs:
             ORIENTATION="portrait"
           fi
 
+          # Kick off simulator boot in parallel while Xcode compiles
+          echo "=== Booting ${DEVICE_KIND} simulator in background (${SIM_UDID}, ${ORIENTATION}) ==="
+          xcrun simctl boot "$SIM_UDID" || true
+
           xcodebuild build-for-testing \
             -project ReceiptsTracker.xcodeproj \
             -scheme ReceiptsTrackerScreenshots \
@@ -107,11 +111,9 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
             CODE_SIGNING_ALLOWED=NO
 
-          # Boot simulator once per device and reuse it across light/dark modes
-          echo "=== Booting ${DEVICE_KIND} simulator (${SIM_UDID}, ${ORIENTATION}) ==="
-          xcrun simctl boot "$SIM_UDID" || true
+          # Wait for the already-booting simulator to finish starting
           xcrun simctl bootstatus "$SIM_UDID" -b
-          sleep 5
+          sleep 2
           xcrun simctl status_bar "$SIM_UDID" override --time "9:41" --batteryState charged --batteryLevel 100 || true
 
           for mode in $MODES; do
@@ -161,6 +163,18 @@ jobs:
                               base += ".png"
                           shutil.copy2(src, os.path.join(out_dir, base))
           PY
+            fi
+
+            # Normalize raw framebuffer landscape screenshots upright so they open horizontally
+            if [ "$ORIENTATION" = "landscape" ]; then
+              for png in "$out_dir"/*.png; do
+                [ -f "$png" ] || continue
+                w=$(sips -g pixelWidth "$png" | awk '/pixelWidth/{print $2}')
+                h=$(sips -g pixelHeight "$png" | awk '/pixelHeight/{print $2}')
+                if [ -n "$w" ] && [ -n "$h" ] && [ "$w" -lt "$h" ]; then
+                  sips -r 270 "$png" >/dev/null
+                fi
+              done
             fi
 
             echo "Captured files in ${DEVICE_KIND}-${mode}:"
