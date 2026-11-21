@@ -101,6 +101,7 @@ jobs:
           echo "=== Booting ${DEVICE_KIND} simulator (${SIM_UDID}) ==="
           xcrun simctl boot "$SIM_UDID" || true
           xcrun simctl bootstatus "$SIM_UDID" -b
+          sleep 5
           xcrun simctl status_bar "$SIM_UDID" override --time "9:41" --batteryState charged --batteryLevel 100 || true
 
           for mode in $MODES; do
@@ -118,6 +119,8 @@ jobs:
               -derivedDataPath "$RUNNER_TEMP/DerivedData" \
               -destination "platform=iOS Simulator,id=$SIM_UDID" \
               -resultBundlePath "$result_bundle" \
+              -retry-tests-on-failure \
+              -test-iterations 2 \
               -only-testing:ReceiptsTrackerUITests/ScreenshotUITests/testCaptureAppScreenshots \
               TEST_RUNNER_SCREENSHOT_DIR="$out_dir" \
               CODE_SIGNING_ALLOWED=NO

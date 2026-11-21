@@ -12,10 +12,10 @@ final class ScreenshotUITests: XCTestCase {
     }
 
     func testCaptureAppScreenshots() {
-        // 1. Dashboard (switch to All Time so all demo receipts & charts render)
-        let allTimeButton = app.buttons["All Time"]
-        if allTimeButton.waitForExistence(timeout: 5) {
-            allTimeButton.tap()
+        // 1. Dashboard ("This Month" is default and renders a multi-day trend curve for demo receipts)
+        let thisMonthButton = app.buttons["This Month"]
+        if thisMonthButton.waitForExistence(timeout: 5) {
+            thisMonthButton.tap()
             sleep(1)
         }
         saveScreenshot(named: "01_Dashboard")

@@ -53,17 +53,19 @@ struct SettingsView: View {
 
             Section {
                 HStack(spacing: 10) {
-                    Image(systemName: "key.fill")
-                        .foregroundStyle(Color.accentColor)
+                    Label("API Key", systemImage: "key.fill")
+                        .fixedSize()
 
                     if isApiKeyVisible {
-                        TextField("Paste Gemini API Key", text: apiKeyBinding(for: viewModel))
+                        TextField("Paste key", text: apiKeyBinding(for: viewModel))
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
+                            .multilineTextAlignment(.trailing)
                     } else {
-                        SecureField("Paste Gemini API Key", text: apiKeyBinding(for: viewModel))
+                        SecureField("Paste key", text: apiKeyBinding(for: viewModel))
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
+                            .multilineTextAlignment(.trailing)
                     }
 
                     Button(isApiKeyVisible ? "Hide" : "Show") {

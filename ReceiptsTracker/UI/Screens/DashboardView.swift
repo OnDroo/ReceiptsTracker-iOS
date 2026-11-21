@@ -103,12 +103,9 @@ struct DashboardView: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
-            .padding(.bottom, 96)
+            .padding(.bottom, 24)
         }
         .background(AppTheme.groupedBackground)
-        .overlay(alignment: .bottomTrailing) {
-            floatingScanButton
-        }
     }
 
     private func timeFilterStrip(viewModel: DashboardViewModel) -> some View {
@@ -193,20 +190,6 @@ struct DashboardView: View {
         .nativeCardSurface(cornerRadius: 22)
     }
 
-    private var floatingScanButton: some View {
-        AdaptiveGlassContainer {
-            Button(action: onScanTap) {
-                Label("Scan", systemImage: "doc.viewfinder")
-                    .font(.headline)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 12)
-            }
-            .adaptiveGlassButtonStyle(prominent: true)
-            .shadow(color: .black.opacity(0.14), radius: 12, y: 6)
-        }
-        .padding(.trailing, 20)
-        .padding(.bottom, 16)
-    }
 }
 
 #Preview {
