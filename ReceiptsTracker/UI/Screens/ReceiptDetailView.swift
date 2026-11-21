@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ReceiptDetailView: View {
     @Environment(AppContainer.self) private var container
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     let receiptId: String
     let onDeleted: () -> Void
@@ -163,47 +162,48 @@ struct ReceiptDetailView: View {
 
     @ViewBuilder
     private func detailBody(receipt: ReceiptSnapshot, viewModel: ReceiptDetailViewModel) -> some View {
-        let isRegularWidth = horizontalSizeClass == .regular
+        GeometryReader { proxy in
+            if proxy.size.width >= 660 {
+                // Spacious canvas (full-screen unfolded iPhone Duo / landscape iPad): side-by-side items and raw scan
+                ScrollView {
+                    HStack(alignment: .top, spacing: 20) {
+                        VStack(spacing: 18) {
+                            headerCard(receipt: receipt)
+                            itemsCard(receipt: receipt)
+                        }
+                        .frame(maxWidth: .infinity)
 
-        if isRegularWidth {
-            // Unfolded iPhone Duo / iPad: side-by-side items and raw receipt scan
-            ScrollView {
-                HStack(alignment: .top, spacing: 20) {
+                        rawImageCard(image: viewModel.receiptImage())
+                            .frame(maxWidth: .infinity)
+                    }
+                    .padding(20)
+                }
+                .background(AppTheme.groupedBackground)
+            } else {
+                // Compact width or detail pane inside NavigationSplitView: clean single-column layout
+                ScrollView {
                     VStack(spacing: 18) {
                         headerCard(receipt: receipt)
-                        itemsCard(receipt: receipt)
-                    }
-                    .frame(maxWidth: .infinity)
 
-                    rawImageCard(image: viewModel.receiptImage())
-                        .frame(maxWidth: .infinity)
-                }
-                .padding(20)
-            }
-            .background(AppTheme.groupedBackground)
-        } else {
-            ScrollView {
-                VStack(spacing: 18) {
-                    headerCard(receipt: receipt)
+                        Picker("View Mode", selection: $selectedSegment) {
+                            ForEach(DetailSegment.allCases) { segment in
+                                Text(segment.rawValue).tag(segment)
+                            }
+                        }
+                        .pickerStyle(.segmented)
 
-                    Picker("View Mode", selection: $selectedSegment) {
-                        ForEach(DetailSegment.allCases) { segment in
-                            Text(segment.rawValue).tag(segment)
+                        switch selectedSegment {
+                        case .items:
+                            itemsCard(receipt: receipt)
+                        case .image:
+                            rawImageCard(image: viewModel.receiptImage())
                         }
                     }
-                    .pickerStyle(.segmented)
-
-                    switch selectedSegment {
-                    case .items:
-                        itemsCard(receipt: receipt)
-                    case .image:
-                        rawImageCard(image: viewModel.receiptImage())
-                    }
+                    .padding(16)
+                    .padding(.bottom, 32)
                 }
-                .padding(16)
-                .padding(.bottom, 32)
+                .background(AppTheme.groupedBackground)
             }
-            .background(AppTheme.groupedBackground)
         }
     }
 
@@ -222,18 +222,22 @@ struct ReceiptDetailView: View {
                     Text(receipt.storeName)
                         .font(.headline)
                         .foregroundStyle(.primary)
+                        .lineLimit(2)
 
                     Text(DateUtils.formatDetailDateTime(receipt.dateTimestamp))
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
 
-                Spacer()
+                Spacer(minLength: 8)
 
                 if let categoryName = receipt.category?.name {
                     Text(categoryName)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(iconTint)
+                        .lineLimit(1)
+                        .fixedSize()
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
                         .background(iconTint.opacity(0.14), in: Capsule())
@@ -262,6 +266,7 @@ struct ReceiptDetailView: View {
                         Label(payment, systemImage: "creditcard")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
                     if let txId = receipt.metadata.transactionId, !txId.isEmpty {
                         Label(txId, systemImage: "number")
@@ -283,12 +288,15 @@ struct ReceiptDetailView: View {
                 Text("Purchased Items")
                     .font(.headline)
                     .foregroundStyle(.primary)
+                    .lineLimit(1)
 
                 Spacer()
 
                 Text("\(receipt.items.count) \(receipt.items.count == 1 ? "item" : "items")")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .fixedSize()
             }
 
             if receipt.items.isEmpty {
@@ -329,6 +337,7 @@ struct ReceiptDetailView: View {
                 Text(item.name)
                     .font(.body.weight(.medium))
                     .foregroundStyle(.primary)
+                    .lineLimit(2)
 
                 let qtyText = item.quantity.truncatingRemainder(dividingBy: 1) == 0
                     ? "\(Int(item.quantity))"
@@ -337,6 +346,7 @@ struct ReceiptDetailView: View {
                 Text("\(qtyText) \(unitText)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
 
             Spacer(minLength: 8)
@@ -345,6 +355,9 @@ struct ReceiptDetailView: View {
                 .font(.body.weight(.semibold))
                 .monospacedDigit()
                 .foregroundStyle(.primary)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .layoutPriority(1)
         }
     }
 

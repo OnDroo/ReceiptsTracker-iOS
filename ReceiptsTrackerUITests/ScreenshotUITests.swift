@@ -6,6 +6,11 @@ final class ScreenshotUITests: XCTestCase {
 
     override func setUp() async throws {
         continueAfterFailure = false
+        if ProcessInfo.processInfo.environment["SCREENSHOT_ORIENTATION"] == "landscape" {
+            XCUIDevice.shared.orientation = .landscapeLeft
+        } else {
+            XCUIDevice.shared.orientation = .portrait
+        }
         app = XCUIApplication()
         app.launchArguments = ["--demo-data"]
         app.launch()

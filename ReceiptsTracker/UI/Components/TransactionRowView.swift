@@ -24,6 +24,7 @@ struct TransactionRowView: View {
                 Text(item.dateString)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
 
                 if !item.matchedItems.isEmpty {
                     VStack(alignment: .leading, spacing: 2) {
@@ -44,6 +45,9 @@ struct TransactionRowView: View {
                 .font(.body.weight(.semibold))
                 .monospacedDigit()
                 .foregroundStyle(.primary)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .layoutPriority(1)
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
