@@ -59,14 +59,7 @@ struct DashboardView: View {
                 )
 
                 if isRegularWidth {
-                    LazyVGrid(
-                        columns: [
-                            GridItem(.flexible(), spacing: 16),
-                            GridItem(.flexible(), spacing: 16)
-                        ],
-                        alignment: .leading,
-                        spacing: 16
-                    ) {
+                    HStack(alignment: .top, spacing: 16) {
                         SpendingTrendsCard(
                             points: viewModel.trendPoints,
                             dateRangeLabel: viewModel.dateRangeLabel,
@@ -80,6 +73,7 @@ struct DashboardView: View {
                             onTap: onOpenReceipts
                         )
                     }
+                    .fixedSize(horizontal: false, vertical: true)
                 } else {
                     SpendingTrendsCard(
                         points: viewModel.trendPoints,

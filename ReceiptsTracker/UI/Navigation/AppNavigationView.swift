@@ -16,7 +16,7 @@ struct AppNavigationView: View {
     @State private var isPresentingSettings: Bool = false
 
     var body: some View {
-        adaptiveTabView
+        tabContent
             .sheet(isPresented: $isPresentingSettings) {
                 NavigationStack {
                     SettingsView {
@@ -37,16 +37,6 @@ struct AppNavigationView: View {
                     }
                 }
             }
-    }
-
-    @ViewBuilder
-    private var adaptiveTabView: some View {
-        if #available(iOS 18.0, *) {
-            tabContent
-                .tabViewStyle(.sidebarAdaptable)
-        } else {
-            tabContent
-        }
     }
 
     private var tabContent: some View {

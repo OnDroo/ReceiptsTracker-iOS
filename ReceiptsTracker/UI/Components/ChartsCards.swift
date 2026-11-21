@@ -26,6 +26,7 @@ struct DashboardSummarySection: View {
                 onTap: onTap
             )
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -68,7 +69,7 @@ struct DashboardStatCard: View {
                 }
             }
             .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .nativeCardSurface(cornerRadius: 20)
         }
         .buttonStyle(.plain)
@@ -173,9 +174,11 @@ struct SpendingTrendsCard: View {
                     }
                     .frame(height: 150)
                 }
+
+                Spacer(minLength: 0)
             }
             .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .nativeCardSurface(cornerRadius: 22)
         }
         .buttonStyle(.plain)
@@ -204,6 +207,8 @@ struct CategoryBreakdownCard: View {
                         .foregroundStyle(.tertiary)
                 }
 
+                Spacer(minLength: 0)
+
                 if breakdown.isEmpty {
                     ContentUnavailableView {
                         Label("No Categories Yet", systemImage: "chart.pie")
@@ -226,9 +231,11 @@ struct CategoryBreakdownCard: View {
                         }
                     }
                 }
+
+                Spacer(minLength: 0)
             }
             .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .nativeCardSurface(cornerRadius: 22)
         }
         .buttonStyle(.plain)
