@@ -102,7 +102,8 @@ jobs:
 
           # Kick off simulator boot in parallel while Xcode compiles
           echo "=== Booting ${DEVICE_KIND} simulator in background (${SIM_UDID}, ${ORIENTATION}) ==="
-          xcrun simctl boot "$SIM_UDID" || true
+          xcrun simctl boot "$SIM_UDID" >/dev/null 2>&1 &
+          BOOT_PID=$!
 
           xcodebuild build-for-testing \
             -project ReceiptsTracker.xcodeproj \
@@ -112,6 +113,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO
 
           # Wait for the already-booting simulator to finish starting
+          wait "$BOOT_PID" || true
           xcrun simctl bootstatus "$SIM_UDID" -b
           sleep 2
           xcrun simctl status_bar "$SIM_UDID" override --time "9:41" --batteryState charged --batteryLevel 100 || true
@@ -165,7 +167,7 @@ jobs:
           PY
             fi
 
-            # Normalize raw framebuffer landscape screenshots upright so they open horizontally
+            # Normalize raw framebuffer landscape screenshots upright and strip stale EXIF orientation
             if [ "$ORIENTATION" = "landscape" ]; then
               for png in "$out_dir"/*.png; do
                 [ -f "$png" ] || continue
@@ -175,6 +177,32 @@ jobs:
                   sips -r 270 "$png" >/dev/null
                 fi
               done
+              python3 - "$out_dir" <<'PY'
+          import glob, os, struct, sys
+
+          for path in glob.glob(os.path.join(sys.argv[1], "*.png")):
+              with open(path, "rb") as f:
+                  data = f.read()
+              if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+                  continue
+              out = bytearray(data[:8])
+              pos = 8
+              changed = False
+              while pos + 12 <= len(data):
+                  length = struct.unpack(">I", data[pos:pos + 4])[0]
+                  chunk_type = data[pos + 4:pos + 8]
+                  end = pos + 12 + length
+                  if end > len(data):
+                      break
+                  if chunk_type == b"eXIf":
+                      changed = True
+                  else:
+                      out.extend(data[pos:end])
+                  pos = end
+              if changed:
+                  with open(path, "wb") as f:
+                      f.write(out)
+          PY
             fi
 
             echo "Captured files in ${DEVICE_KIND}-${mode}:"

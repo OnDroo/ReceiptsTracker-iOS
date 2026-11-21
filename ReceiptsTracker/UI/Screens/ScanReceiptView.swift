@@ -28,7 +28,8 @@ struct ScanReceiptView: View {
                 }
             }
             .navigationTitle("Scan Receipt")
-            .navigationBarTitleDisplayMode(onDismiss == nil ? .large : .inline)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(onDismiss == nil ? .hidden : .visible, for: .navigationBar)
             .toolbar {
                 if let onDismiss {
                     ToolbarItem(placement: .cancellationAction) {
@@ -121,83 +122,98 @@ struct ScanReceiptView: View {
 
     private var captureOptionsContent: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                VStack(spacing: 12) {
-                    Image(systemName: "doc.viewfinder.fill")
-                        .font(.system(size: 56))
-                        .foregroundStyle(Color.accentColor)
-                        .padding(22)
-                        .background(Color.accentColor.opacity(0.12), in: Circle())
-
-                    Text("Scan or Import a Receipt")
-                        .font(.title2.bold())
-                        .multilineTextAlignment(.center)
-
-                    Text("Capture a paper receipt with the document scanner or pick an existing photo. Gemini extracts the store, items, totals, and category automatically.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.top, 16)
-
-                if container.settingsStore.apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "key.fill")
-                            .foregroundStyle(.orange)
-                            .font(.title3)
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Gemini API Key Needed")
-                                .font(.subheadline.weight(.semibold))
-                            Text("Add your free Google AI Studio API key in Settings before scanning.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Button("Open Settings") {
-                                onDismiss?()
-                                onOpenSettings()
-                            }
-                            .font(.caption.weight(.semibold))
-                            .padding(.top, 2)
-                        }
+            VStack(spacing: 0) {
+                if onDismiss == nil {
+                    HStack(alignment: .center) {
+                        Text("Scan Receipt")
+                            .font(.largeTitle.bold())
+                            .foregroundStyle(.primary)
                         Spacer()
                     }
-                    .padding(14)
-                    .nativeCardSurface(cornerRadius: 16)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
                 }
 
-                AdaptiveGlassContainer(spacing: 12) {
+                VStack(spacing: 24) {
                     VStack(spacing: 12) {
-                        Button {
-                            if DocumentScannerView.isSupported {
-                                isShowingCameraScanner = true
-                            } else {
-                                scannerErrorMessage = "Document scanning requires a physical camera. Use \"Import from Photos\" on Simulator."
-                            }
-                        } label: {
-                            Label("Scan with Camera", systemImage: "camera.viewfinder")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 6)
-                        }
-                        .adaptiveGlassButtonStyle(prominent: true)
-                        .controlSize(.large)
+                        Image(systemName: "doc.viewfinder.fill")
+                            .font(.system(size: 56))
+                            .foregroundStyle(Color.accentColor)
+                            .padding(22)
+                            .background(Color.accentColor.opacity(0.12), in: Circle())
 
-                        PhotosPicker(
-                            selection: $selectedPhotoItem,
-                            matching: .images
-                        ) {
-                            Label("Import from Photos", systemImage: "photo.on.rectangle.angled")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 6)
-                        }
-                        .adaptiveGlassButtonStyle(prominent: false)
-                        .controlSize(.large)
+                        Text("Scan or Import a Receipt")
+                            .font(.title2.bold())
+                            .multilineTextAlignment(.center)
+
+                        Text("Capture a paper receipt with the document scanner or pick an existing photo. Gemini extracts the store, items, totals, and category automatically.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
                     }
+                    .padding(.top, onDismiss == nil ? 28 : 16)
+
+                    if container.settingsStore.apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: "key.fill")
+                                .foregroundStyle(.orange)
+                                .font(.title3)
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Gemini API Key Needed")
+                                    .font(.subheadline.weight(.semibold))
+                                Text("Add your free Google AI Studio API key in Settings before scanning.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Button("Open Settings") {
+                                    onDismiss?()
+                                    onOpenSettings()
+                                }
+                                .font(.caption.weight(.semibold))
+                                .padding(.top, 2)
+                            }
+                            Spacer()
+                        }
+                        .padding(14)
+                        .nativeCardSurface(cornerRadius: 16)
+                    }
+
+                    AdaptiveGlassContainer(spacing: 12) {
+                        VStack(spacing: 12) {
+                            Button {
+                                if DocumentScannerView.isSupported {
+                                    isShowingCameraScanner = true
+                                } else {
+                                    scannerErrorMessage = "Document scanning requires a physical camera. Use \"Import from Photos\" on Simulator."
+                                }
+                            } label: {
+                                Label("Scan with Camera", systemImage: "camera.viewfinder")
+                                    .font(.headline)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 6)
+                            }
+                            .adaptiveGlassButtonStyle(prominent: true)
+                            .controlSize(.large)
+
+                            PhotosPicker(
+                                selection: $selectedPhotoItem,
+                                matching: .images
+                            ) {
+                                Label("Import from Photos", systemImage: "photo.on.rectangle.angled")
+                                    .font(.headline)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 6)
+                            }
+                            .adaptiveGlassButtonStyle(prominent: false)
+                            .controlSize(.large)
+                        }
+                    }
+                    .frame(maxWidth: 420)
                 }
-                .frame(maxWidth: 420)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
+                .frame(maxWidth: .infinity)
             }
-            .padding(24)
             .frame(maxWidth: .infinity)
         }
     }

@@ -21,6 +21,7 @@ struct ReceiptListView: View {
             }
         }
         .navigationTitle("Receipts")
+        .toolbar(usesSplitSelection ? .visible : .hidden, for: .navigationBar)
         .task {
             if viewModel == nil {
                 let vm = ReceiptListViewModel(
@@ -42,7 +43,24 @@ struct ReceiptListView: View {
     private func listContent(viewModel: ReceiptListViewModel) -> some View {
         @Bindable var bindableVM = viewModel
 
+        if usesSplitSelection {
+            listBody(viewModel: viewModel, searchQuery: $bindableVM.searchQuery)
+                .searchable(
+                    text: $bindableVM.searchQuery,
+                    placement: .navigationBarDrawer(displayMode: .always),
+                    prompt: "Search stores or items…"
+                )
+        } else {
+            listBody(viewModel: viewModel, searchQuery: $bindableVM.searchQuery)
+        }
+    }
+
+    private func listBody(viewModel: ReceiptListViewModel, searchQuery: Binding<String>) -> some View {
         VStack(spacing: 0) {
+            if !usesSplitSelection {
+                compactHeader(searchQuery: searchQuery)
+            }
+
             categoryFilterBar(viewModel: viewModel)
 
             if viewModel.sections.isEmpty {
@@ -60,11 +78,46 @@ struct ReceiptListView: View {
             }
         }
         .background(AppTheme.groupedBackground)
-        .searchable(
-            text: $bindableVM.searchQuery,
-            placement: .navigationBarDrawer(displayMode: .always),
-            prompt: "Search stores or items…"
-        )
+    }
+
+    private func compactHeader(searchQuery: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center) {
+                Text("Receipts")
+                    .font(.largeTitle.bold())
+                    .foregroundStyle(.primary)
+                Spacer()
+            }
+            .padding(.top, 4)
+
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.secondary)
+
+                TextField("Search stores or items…", text: searchQuery)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .submitLabel(.search)
+
+                if !searchQuery.wrappedValue.isEmpty {
+                    Button {
+                        searchQuery.wrappedValue = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Clear search")
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(AppTheme.cardBackground, in: Capsule())
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
     }
 
     private func categoryFilterBar(viewModel: ReceiptListViewModel) -> some View {
