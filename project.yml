@@ -1,0 +1,42 @@
+name: ReceiptsTracker
+options:
+  bundleIdPrefix: link.ondrov
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ""
+    INFOPLIST_FILE: ReceiptsTracker/Info.plist
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+targets:
+  ReceiptsTracker:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: ReceiptsTracker
+        excludes:
+          - "**/.gitkeep"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: link.ondrov.receipts
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  ReceiptsTrackerTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: ReceiptsTrackerTests
+        excludes:
+          - "**/.gitkeep"
+    dependencies:
+      - target: ReceiptsTracker
