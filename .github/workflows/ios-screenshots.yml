@@ -1,0 +1,138 @@
+name: iOS Simulator Screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      appearance:
+        description: "Color appearance to capture"
+        type: choice
+        default: both
+        options:
+          - both
+          - light
+          - dark
+      include_wide_layout:
+        description: "Also capture wide (regular size class / iPad mini) layout"
+        type: boolean
+        default: true
+
+jobs:
+  capture-screenshots:
+    name: Capture Simulator Screenshots
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: |
+          if ! command -v xcodegen &> /dev/null; then
+            brew install xcodegen
+          fi
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Select Simulators (iPhone & Wide/iPad)
+        id: sims
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, subprocess
+
+          data = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "--json"]))
+          ios_runtimes = sorted(
+              (k for k in data["devices"].keys() if "iOS" in k),
+              reverse=True
+          )
+
+          iphone_id = ""
+          wide_id = ""
+
+          for runtime in ios_runtimes:
+              devices = [d for d in data["devices"][runtime] if d.get("isAvailable")]
+              if not iphone_id:
+                  iphones = [d for d in devices if "iPhone" in d.get("name", "")]
+                  if iphones:
+                      iphone_id = iphones[0]["udid"]
+              if not wide_id:
+                  # Prefer iPad mini (closest to unfolded iPhone Duo 7.6" regular canvas), fallback to any iPad
+                  ipads = [d for d in devices if "iPad mini" in d.get("name", "")] or [d for d in devices if "iPad" in d.get("name", "")]
+                  if ipads:
+                      wide_id = ipads[0]["udid"]
+
+          print(f"iphone_id={iphone_id}")
+          print(f"wide_id={wide_id}")
+          PY
+
+      - name: Capture Screenshots
+        env:
+          APPEARANCE: ${{ github.event.inputs.appearance || 'both' }}
+          INCLUDE_WIDE: ${{ github.event.inputs.include_wide_layout || 'true' }}
+          IPHONE_ID: ${{ steps.sims.outputs.iphone_id }}
+          WIDE_ID: ${{ steps.sims.outputs.wide_id }}
+        run: |
+          set -euo pipefail
+          OUT_ROOT="$RUNNER_TEMP/screenshots"
+          mkdir -p "$OUT_ROOT"
+
+          if [ "$APPEARANCE" = "both" ]; then
+            MODES="light dark"
+          else
+            MODES="$APPEARANCE"
+          fi
+
+          xcodebuild build-for-testing \
+            -project ReceiptsTracker.xcodeproj \
+            -scheme ReceiptsTrackerScreenshots \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO
+
+          run_capture() {
+            local label="$1"
+            local udid="$2"
+            local mode="$3"
+            local out_dir="$OUT_ROOT/${label}-${mode}"
+            mkdir -p "$out_dir"
+
+            echo "=== Capturing ${label} (${mode}) on ${udid} ==="
+            xcrun simctl boot "$udid" || true
+            xcrun simctl bootstatus "$udid" -b
+            xcrun simctl ui "$udid" appearance "$mode"
+            xcrun simctl status_bar "$udid" override --time "9:41" --batteryState charged --batteryLevel 100 || true
+
+            xcodebuild test-without-building \
+              -project ReceiptsTracker.xcodeproj \
+              -scheme ReceiptsTrackerScreenshots \
+              -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+              -destination "platform=iOS Simulator,id=$udid" \
+              -only-testing:ReceiptsTrackerUITests/ScreenshotUITests/testCaptureAppScreenshots \
+              TEST_RUNNER_SCREENSHOT_DIR="$out_dir" \
+              CODE_SIGNING_ALLOWED=NO
+
+            xcrun simctl shutdown "$udid" || true
+          }
+
+          for mode in $MODES; do
+            run_capture "iphone" "$IPHONE_ID" "$mode"
+          done
+
+          if [ "$INCLUDE_WIDE" = "true" ] && [ -n "$WIDE_ID" ]; then
+            for mode in $MODES; do
+              run_capture "wide" "$WIDE_ID" "$mode"
+            done
+          fi
+
+          echo "## Captured Screenshots" >> "$GITHUB_STEP_SUMMARY"
+          find "$OUT_ROOT" -name "*.png" | sort | while read -r file; do
+            rel="${file#$OUT_ROOT/}"
+            echo "- \`$rel\`" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Upload Screenshots Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-screenshots
+          path: ${{ runner.temp }}/screenshots
+          if-no-files-found: error

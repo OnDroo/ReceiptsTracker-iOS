@@ -47,6 +47,22 @@ targets:
     dependencies:
       - target: ReceiptsTracker
 
+  ReceiptsTrackerUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: ReceiptsTrackerUITests
+        excludes:
+          - "**/.gitkeep"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: link.ondrov.receipts.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: ReceiptsTracker
+    dependencies:
+      - target: ReceiptsTracker
+
 schemes:
   ReceiptsTracker:
     build:
@@ -56,3 +72,12 @@ schemes:
     test:
       targets:
         - ReceiptsTrackerTests
+
+  ReceiptsTrackerScreenshots:
+    build:
+      targets:
+        ReceiptsTracker: all
+        ReceiptsTrackerUITests: [test]
+    test:
+      targets:
+        - ReceiptsTrackerUITests
