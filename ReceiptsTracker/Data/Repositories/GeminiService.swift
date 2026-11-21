@@ -135,13 +135,12 @@ final class GeminiService {
     func analyzeReceipt(imageURL: URL) async throws -> String {
         let (apiKey, modelName, categories) = try await MainActor.run {
             let key = settingsStore.apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !key.isEmpty else {
+                throw GeminiServiceError.missingApiKey
+            }
             let model = settingsStore.selectedModel.trimmingCharacters(in: .whitespacesAndNewlines)
             let cats = try receiptRepository.fetchAllCategories()
             return (key, model, cats)
-        }
-
-        guard !apiKey.isEmpty else {
-            throw GeminiServiceError.missingApiKey
         }
 
         let effectiveModel = modelName.isEmpty ? SettingsStore.Defaults.geminiModel : modelName

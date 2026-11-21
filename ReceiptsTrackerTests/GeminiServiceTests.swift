@@ -38,6 +38,7 @@ final class GeminiServiceTests: XCTestCase {
     private var secretStorage: MockSecretStorage!
     private var userDefaults: UserDefaults!
     private var suiteName: String!
+    private var modelContainer: ModelContainer?
 
     override func setUp() {
         super.setUp()
@@ -51,14 +52,16 @@ final class GeminiServiceTests: XCTestCase {
 
     override func tearDown() {
         MockURLProtocol.requestHandler = nil
+        modelContainer = nil
         userDefaults.removePersistentDomain(forName: suiteName)
         super.tearDown()
     }
 
     @MainActor
     private func makeService(apiKey: String = "test-api-key") throws -> (GeminiService, SwiftDataReceiptRepository) {
-        let modelContainer = try PersistenceController.makeModelContainer(inMemory: true)
-        let repository = SwiftDataReceiptRepository(modelContext: modelContainer.mainContext)
+        let container = try PersistenceController.makeModelContainer(inMemory: true)
+        self.modelContainer = container
+        let repository = SwiftDataReceiptRepository(modelContext: container.mainContext)
         let settings = SettingsStore(secretStorage: secretStorage, userDefaults: userDefaults)
         settings.apiKey = apiKey
         XCTAssertEqual(settings.selectedModel, "gemini-4-hydrogen")
