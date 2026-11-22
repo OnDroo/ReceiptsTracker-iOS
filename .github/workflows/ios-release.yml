@@ -134,7 +134,8 @@ jobs:
 
           ### Installing on iPhone (Free Apple ID)
           This \`.ipa\` is unsigned so you can sign and install it with your own Apple ID using:
-          - **[SideStore](https://sidestore.io/)** (recommended — refreshes directly on iPhone over Wi-Fi)
+          - **[Impactor](https://github.com/claration/impactor)** (open-source, cross-platform for Windows / macOS / Linux; supports auto-refresh)
+          - **[SideStore](https://sidestore.io/)** (refreshes directly on iPhone over Wi-Fi)
           - **[AltStore](https://altstore.io/)** or **[Sideloadly](https://sideloadly.io/)** (Windows / macOS)
 
           After installing, enable **Developer Mode** (*Settings → Privacy & Security → Developer Mode*) and trust your Apple ID profile (*Settings → General → VPN & Device Management*).
