@@ -29,10 +29,7 @@ final class AppIntentsTests: XCTestCase {
             totalAmount: 50.0,
             dateTimestamp: DateUtils.parseGeminiDate("2026-11-10 10:00:00"),
             currency: "EUR",
-            imageFileName: nil,
-            metadata: .empty,
-            category: nil,
-            items: []
+            imageFileName: ""
         )
         let inMonthCzk = ReceiptSnapshot(
             id: "r2",
@@ -40,10 +37,7 @@ final class AppIntentsTests: XCTestCase {
             totalAmount: 1000.0, // 1000 * 0.04 = 40.00 EUR
             dateTimestamp: DateUtils.parseGeminiDate("2026-11-18 14:00:00"),
             currency: "CZK",
-            imageFileName: nil,
-            metadata: .empty,
-            category: nil,
-            items: []
+            imageFileName: ""
         )
         let previousMonth = ReceiptSnapshot(
             id: "r3",
@@ -51,10 +45,7 @@ final class AppIntentsTests: XCTestCase {
             totalAmount: 999.0,
             dateTimestamp: DateUtils.parseGeminiDate("2026-10-31 23:00:00"),
             currency: "EUR",
-            imageFileName: nil,
-            metadata: .empty,
-            category: nil,
-            items: []
+            imageFileName: ""
         )
 
         let message = MonthlySpendingSummary.buildMessage(
@@ -76,10 +67,7 @@ final class AppIntentsTests: XCTestCase {
             totalAmount: 12.50,
             dateTimestamp: DateUtils.parseGeminiDate("2026-11-05 09:00:00"),
             currency: "EUR",
-            imageFileName: nil,
-            metadata: .empty,
-            category: nil,
-            items: []
+            imageFileName: ""
         )
 
         let message = MonthlySpendingSummary.buildMessage(
