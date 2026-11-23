@@ -11,7 +11,7 @@ enum IntentNavigationBridge {
 
     static func request(_ tab: AppTab) {
         pendingTab = tab
-        NotificationCenter.default.post(name: .openRequestedTab, object: nil)
+        NotificationCenter.default.post(name: .openRequestedTab, object: tab)
     }
 
     static func consumePendingTab() -> AppTab? {

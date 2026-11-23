@@ -81,11 +81,20 @@ final class AppIntentsTests: XCTestCase {
     }
 
     func testScanReceiptIntentRequestsScanTabNavigation() async throws {
+        var receivedTab: AppTab?
+        let token = NotificationCenter.default.addObserver(
+            forName: .openRequestedTab,
+            object: nil,
+            queue: nil
+        ) { notification in
+            receivedTab = notification.object as? AppTab
+        }
+        defer { NotificationCenter.default.removeObserver(token) }
+
         let intent = ScanReceiptIntent()
         _ = try await intent.perform()
 
-        XCTAssertEqual(IntentNavigationBridge.consumePendingTab(), .scan)
-        XCTAssertNil(IntentNavigationBridge.consumePendingTab())
+        XCTAssertEqual(receivedTab, .scan)
     }
 
     func testGetMonthlySpendingIntentReadsActiveContainer() async throws {
