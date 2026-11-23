@@ -24,6 +24,18 @@ struct AppNavigationView: View {
                     }
                 }
             }
+            .onAppear {
+                if let pendingTab = IntentNavigationBridge.consumePendingTab() {
+                    isPresentingSettings = false
+                    selectedTab = pendingTab
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .openRequestedTab)) { _ in
+                if let pendingTab = IntentNavigationBridge.consumePendingTab() {
+                    isPresentingSettings = false
+                    selectedTab = pendingTab
+                }
+            }
             .onChange(of: horizontalSizeClass) { _, newSizeClass in
                 // Preserve open receipt seamlessly when folding/unfolding iPhone Duo
                 if newSizeClass == .regular {

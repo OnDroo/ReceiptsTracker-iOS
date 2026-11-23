@@ -8,7 +8,9 @@ struct ReceiptsTrackerApp: App {
 
     init() {
         let isDemoMode = ProcessInfo.processInfo.arguments.contains("--demo-data")
-        _container = State(initialValue: isDemoMode ? AppContainer.makeDemo() : AppContainer())
+        let initialContainer = isDemoMode ? AppContainer.makeDemo() : AppContainer()
+        AppContainer.active = initialContainer
+        _container = State(initialValue: initialContainer)
     }
 
     var body: some Scene {

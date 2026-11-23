@@ -11,6 +11,7 @@
   * Set your preferred currency (EUR, USD, CZK, etc.) with automatic conversion.
   * Choose your preferred AI Model (e.g., `gemini-4-hydrogen`) and refresh available models from Gemini.
   * API key is stored securely in the iOS Keychain.
+* **Shortcuts & Siri (`AppIntents`)**: Check your monthly spending summary or jump straight into the receipt scanner from Apple Shortcuts, Siri, or the Action Button.
 * **Native iOS Design**: Built with SwiftUI, iOS 26 Liquid Glass, and adaptive layouts for iPhone, iPhone Duo, and iPad.
 
 ## Screenshots

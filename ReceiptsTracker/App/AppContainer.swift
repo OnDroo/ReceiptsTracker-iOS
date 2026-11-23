@@ -6,6 +6,8 @@ import UIKit
 @MainActor
 @Observable
 final class AppContainer {
+    static weak var active: AppContainer?
+
     let modelContainer: ModelContainer
     let receiptRepository: ReceiptRepositoryProtocol
     let settingsStore: SettingsStore
