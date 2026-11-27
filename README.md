@@ -37,13 +37,52 @@ This application requires a Google Gemini API Key to scan and analyze receipts.
 
 ## Opening in Xcode (macOS)
 
-This repository uses [XcodeGen](https://github.com/yonaskolb/XcodeGen) to generate the `.xcodeproj`:
+This repository uses [XcodeGen](https://github.com/yonaskolb/XcodeGen) to generate `ReceiptsTracker.xcodeproj` from `project.yml`.
+
+### Option 1: Using Homebrew (Recommended)
 
 ```bash
 brew install xcodegen
 xcodegen generate
 open ReceiptsTracker.xcodeproj
 ```
+
+#### Troubleshooting `zsh: command not found: brew`
+1. **Check if Homebrew is already installed on Apple Silicon (just missing from `PATH`):**
+   ```bash
+   /opt/homebrew/bin/brew --version
+   ```
+   If that prints a version number, load it into your shell and run `xcodegen`:
+   ```bash
+   eval "$(/opt/homebrew/bin/brew shellenv)"
+   brew install xcodegen
+   xcodegen generate
+   open ReceiptsTracker.xcodeproj
+   ```
+2. **If Homebrew is not installed yet** (requires macOS admin password):
+   ```bash
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   ```
+   Follow the `eval "$(/opt/homebrew/bin/brew shellenv)"` instructions printed at the end, then run the `brew install xcodegen` commands above.
+
+### Option 2: Without Homebrew (No Admin Password Needed)
+
+Useful on school or lab Macs where Homebrew cannot be installed. Run these commands from the repository root:
+
+```bash
+curl -L https://github.com/yonaskolb/XcodeGen/releases/latest/download/xcodegen.artifactbundle.zip -o /tmp/xcodegen.zip
+unzip -o /tmp/xcodegen.zip -d /tmp/xcodegen
+/tmp/xcodegen/xcodegen.artifactbundle/xcodegen-*/bin/xcodegen generate
+open ReceiptsTracker.xcodeproj
+```
+
+> If macOS Gatekeeper blocks the downloaded binary, clear the quarantine attribute once and re-run the `generate` command:
+> ```bash
+> xattr -dr com.apple.quarantine /tmp/xcodegen
+> ```
+
+### Running the App
+Once `ReceiptsTracker.xcodeproj` opens in Xcode, select an iPhone or iPad Simulator in the top toolbar and press **Cmd + R** (or pass `--demo-data` as a launch argument in the scheme to launch with seeded sample receipts).
 
 ## Built With
 * [Swift](https://www.swift.org/) & [SwiftUI](https://developer.apple.com/xcode/swiftui/) (iOS 26 Liquid Glass)
