@@ -48,8 +48,8 @@ Seed on first launch if empty:
 
 ## 5. Screen & Feature Checklist
 
-- [x] **Theme & Utils** (`UI/Theme/`, `Utils/`): Semantic Apple HIG theme, iOS 26 Liquid Glass modifiers (`GlassModifiers.swift`) with iOS 17–25 fallback, currency conversion/formatting, localized date & Gemini date formatting, SF Symbols icon registry, local Documents file storage helper.
-- [x] **Data Layer** (`Data/`): SwiftData models (`Receipt`, `ReceiptItem`, `Category`), idempotent default category seeding, `ReceiptRepositoryProtocol` & `SwiftDataReceiptRepository`, Keychain + `UserDefaults` `SettingsStore`, `URLSession`-based `GeminiService`.
+- [x] **Theme & Utils** (`UI/Theme/`, `Utils/`): Semantic Apple HIG theme, iOS 26 Liquid Glass modifiers (`GlassModifiers.swift`) with iOS 17–25 fallback, currency conversion/formatting, localized date & Gemini date formatting, SF Symbols icon registry.
+- [x] **Data Layer** (`Data/`): `Models/` (SwiftData `@Model` entities, snapshot DTOs, Gemini DTOs), `Persistence/` (`PersistenceController`, `KeychainHelper`, `SettingsStore`, `FileStorageHelper`), `Repositories/` (`ReceiptRepositoryProtocol`, `SwiftDataReceiptRepository`), and `Services/` (`URLSession`-based `GeminiService`).
 - [x] **Navigation** (`UI/Navigation/`): Adaptive `TabView` (`.sidebarAdaptable` on iOS 18+), `NavigationSplitView` for unfolded iPhone Duo / iPad (`.regular` width) collapsing seamlessly to `NavigationStack` on `.compact` width with live state preservation.
 - [x] **Dashboard Screen**: Time filters (`This Week`, `This Month`, `This Year`, `All Time`), summary stat cards, Swift Charts spending trends & `SectorMark` category donut, recent transactions, adaptive 2-column grid for iPhone Duo, Liquid Glass floating Scan action.
 - [x] **Receipt List & Search Screen**: Native `.searchable` full-text search across store names and line items (with matched item bullets), Liquid Glass category filter chips, month grouping, swipe-to-delete, split-view selection on `.regular` width.

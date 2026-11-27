@@ -37,6 +37,9 @@ This document reviews the architecture decisions made while building **Receipts 
 6. **Missing App Icon Assets**:
    - *Found*: `AppIcon.appiconset` had empty placeholder entries.
    - *Fix*: Converted the Android rainbow-receipt icon into 1024×1024 iOS Light, defringed Dark, and Tinted PNG assets and verified `Assets.car` inside the release `.ipa`.
+7. **Mixed Responsibilities Inside `Data/Repositories/`**:
+   - *Found*: Carryover from Android's `*Repository` naming left `GeminiService` (remote HTTP API client) and `SettingsStore` (preferences) inside `Data/Repositories/` alongside the SwiftData repository, while stateful disk I/O (`FileStorageHelper`) lived in `Utils/`.
+   - *Fix*: Separated `Data/` cleanly by role — `Data/Services/GeminiService.swift` (remote API), `Data/Persistence/` (`PersistenceController`, `KeychainHelper`, `SettingsStore`, `FileStorageHelper`), and `Data/Repositories/` (strictly `ReceiptRepositoryProtocol` + `SwiftDataReceiptRepository`) — leaving `Utils/` for pure stateless formatting/mapping helpers.
 
 ---
 
